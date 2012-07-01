@@ -36,6 +36,8 @@ using System.ComponentModel.Design.Serialization;
 using System.Collections;
 using System.Web.UI;
 
+using MonoDevelop.AspNet.Parser;
+
 namespace AspNetEdit.Editor.ComponentModel
 {
 	
@@ -72,13 +74,13 @@ namespace AspNetEdit.Editor.ComponentModel
 				component.Site.Container.Remove (component);
 
 			//Check the name and create one if necessary
-			INameCreationService nameService = host.GetService (typeof (INameCreationService)) as INameCreationService;
+			INameCreationService nameService = host.GetService (typeof(INameCreationService)) as INameCreationService;
 			if (nameService == null)
 				throw new Exception ("The container must have access to a INameCreationService implementation");
 			
 			if (name == null || !nameService.IsValidName (name)) {
 				name = nameService.CreateName (this, component.GetType ());
-				System.Diagnostics.Trace.WriteLine("Generated name for component: "+name);
+				System.Diagnostics.Trace.WriteLine ("Generated name for component: " + name);
 			}
 
 			//check we don't already have component with same name
@@ -90,12 +92,11 @@ namespace AspNetEdit.Editor.ComponentModel
 
 			//get a site and set ID property
 			//this way (not PropertyDescriptor.SetValue) won't fire change events
-			((Control) component).ID = name;
+			((Control)component).ID = name;
 			component.Site = new DesignSite (component, this);
 
 			//Get designer. If first component, designer must be an IRootDesigner
-			if (components.Count == 0)
-			{
+			if (components.Count == 0) {
 				host.SetRootComponent (component);
 				designer = new RootDesigner (component);
 			}
@@ -108,17 +109,16 @@ namespace AspNetEdit.Editor.ComponentModel
 			if (designer == null) {
 				//component.Site = null;
 				//throw new Exception ("Designer could not be obtained for this component.");
-			}
-			else
-			{
+			} else {
 				//track and initialise it
 				designers.Add (component, designer);
 				designer.Initialize (component);
 			}
 			
 			//add references to referenceManager, unless root component
-			if (components.Count != 1)
-				host.WebFormReferenceManager.AddReference (component.GetType ());
+			WebFormReferenceManager refMan = host.GetService (typeof (WebFormReferenceManager)) as WebFormReferenceManager;
+			if ((components.Count != 1) && (refMan != null))
+				refMan.AddReference (component.GetType ());
 
 			//Finally put in container
 			components.Add (component);
